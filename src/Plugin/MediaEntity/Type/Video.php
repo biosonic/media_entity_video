@@ -67,6 +67,22 @@ class Video extends MediaTypeBase {
       '#options' => $options,
     ];
 
+    $options_image = [0 => " - disabled - "];
+    $allowed_field_types_thumbnail = ['image'];
+    foreach ($this->entityFieldManager->getFieldDefinitions('media', $bundle->id()) as $field_name => $field) {
+      if (in_array($field->getType(), $allowed_field_types_thumbnail) && !$field->getFieldStorageDefinition()->isBaseField()) {
+        $options_image[$field_name] = $field->getLabel();
+      }
+    }
+
+    $form['thumbnail_field'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Field width thumbnail image'),
+      '#description' => $this->t('Image Field on media entity that provide Thumbnail image. This field provider value is optional. This dropdown can be populated after adding fields to the bundle.'),
+      '#default_value' => empty($this->configuration['thumbnail_field']) ? 0 : $this->configuration['thumbnail_field'],
+      '#options' => $options_image,
+    ];
+
     return $form;
   }
 
@@ -81,6 +97,12 @@ class Video extends MediaTypeBase {
    * {@inheritdoc}
    */
   public function thumbnail(MediaInterface $media) {
+
+    $thumbnail_field = $this->configuration['thumbnail_field'];
+    if (!empty($thumbnail_field) && $file = $media->{$thumbnail_field}->entity) {
+      return $file->getFileUri();
+    }
+
     return $this->getDefaultThumbnail();
   }
 
